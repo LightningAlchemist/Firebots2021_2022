@@ -1,0 +1,1 @@
+/home/joseph/catkin_ws/devel/.private/imgRec/share/imgRec/cmake/imgRecConfig.cmake

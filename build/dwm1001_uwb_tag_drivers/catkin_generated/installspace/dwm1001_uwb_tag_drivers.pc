@@ -1,0 +1,8 @@
+prefix=/home/joseph/catkin_ws/install
+
+Name: dwm1001_uwb_tag_drivers
+Description: Description of dwm1001_uwb_tag_drivers
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

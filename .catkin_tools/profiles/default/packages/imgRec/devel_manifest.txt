@@ -1,0 +1,5 @@
+imgRec
+/home/joseph/catkin_ws/devel/.private/imgRec/cmake.lock /home/joseph/catkin_ws/devel/./cmake.lock
+/home/joseph/catkin_ws/devel/.private/imgRec/share/imgRec/cmake/imgRecConfig.cmake /home/joseph/catkin_ws/devel/share/imgRec/cmake/imgRecConfig.cmake
+/home/joseph/catkin_ws/devel/.private/imgRec/share/imgRec/cmake/imgRecConfig-version.cmake /home/joseph/catkin_ws/devel/share/imgRec/cmake/imgRecConfig-version.cmake
+/home/joseph/catkin_ws/devel/.private/imgRec/lib/pkgconfig/imgRec.pc /home/joseph/catkin_ws/devel/lib/pkgconfig/imgRec.pc

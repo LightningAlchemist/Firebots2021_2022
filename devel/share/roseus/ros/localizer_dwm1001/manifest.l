@@ -1,0 +1,1 @@
+/home/joseph/catkin_ws/devel/.private/localizer_dwm1001/share/roseus/ros/localizer_dwm1001/manifest.l
