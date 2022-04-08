@@ -1,6 +1,5 @@
 #!/usr/bin/env python 
 #from geometry_msgs import msg
-from cv2 import sqrt
 import roslib
 import math
 #mport tf2_py
@@ -96,8 +95,8 @@ class Estimator:
 
         # the belief at each index in the belief matrix tends towards 0.5 (maximum uncertainty)
         self.decayBelief()
-	pubdata = Float32MultiArray()
-	pubdata.data = self.estimated_state
+        pubdata = Float32MultiArray()
+        pubdata.data = self.estimated_state
         self.pub.publish(pubdata)
         #print(self.estimated_state).
 
@@ -107,4 +106,4 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         print('est state: ', estimator.estimated_state)
         estimator.main()
-	rospy.sleep(1)
+    rospy.sleep(1)
