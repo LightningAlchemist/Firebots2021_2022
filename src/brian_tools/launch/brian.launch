@@ -1,0 +1,12 @@
+<launch>
+    <node pkg="imgRec" type="img_rec.py" name="img_rec_line" output="none">
+    <node pkg="imgRec" type="estimator.py" name="estimator_listener" output="none">
+    <node pkg="brian_tools"  type="brian_output.py" name="brian_output" output = "screen">
+    <node pkg="localizer_dwm1001" type="dwm1001_main.py" name="localizer_dwm1001" output="none">
+
+        <param name="serial_port_name"      value="/dev/ttyACM1" /> <!-- Name of serial port -->
+        <param name="serial_baud_rate"      value="115200" />  <!--Baudrate of serial port-->
+
+    </node>
+
+</launch>:
