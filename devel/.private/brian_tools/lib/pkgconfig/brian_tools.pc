@@ -1,0 +1,8 @@
+prefix=/home/joseph/catkin_ws/devel/.private/brian_tools
+
+Name: brian_tools
+Description: Description of brian_tools
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

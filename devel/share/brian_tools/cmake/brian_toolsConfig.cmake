@@ -1,0 +1,1 @@
+/home/joseph/catkin_ws/devel/.private/brian_tools/share/brian_tools/cmake/brian_toolsConfig.cmake
