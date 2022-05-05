@@ -42,11 +42,11 @@ class Estimator:
         rospy.Subscriber('/dwm1001/tag', Tag, self.getPosition) # subscribe tag message
         self.pub = rospy.Publisher('estimated_state', Float32MultiArray, queue_size=5)
 
-        self.distanceThreshold = 0.1  # The linear travel distance that constitutes a move to another grid
+        self.distanceThreshold = 0.003333  # The linear travel distance that constitutes a move to another grid
         self.redThreshold = 0.01  # the threshold to determine if the grid is on fire
         self.FPR = 0.1  # false positive rate
         self.FNR = 0.1  # false negative rate
-        self.num_locations = 10;
+        self.num_locations = 150;
         self.estimated_state = [0.5] * self.num_locations  # list of 100 locations with initial probability of 0.5
 
         self.index_position = 0  # linear index position
@@ -87,11 +87,7 @@ class Estimator:
         self.delta_pose.x = self.pose.x - self.last_pose.x
         self.delta_pose.y = self.pose.y - self.last_pose.y
 
-        dist = math.sqrt(math.pow(self.delta_pose.x, 2 ) + math.pow(self.delta_pose.y, 2))
-
-        #angle between last and current position
-        if dist > 0:
-            theta1 = acos(((self.delta_pose.x)/(dist)))
+        dist = self.delta_pose.x
 
         #if dif >= self.distanceThreshold:
             #self.last_odom_position['x'] = self.odom_pos.x
@@ -101,6 +97,11 @@ class Estimator:
             self.last_pose.x = self.pose.x
             self.last_pose.x = self.pose.y
             self.index_position += 1
+            
+        elif dist <= self.distanceThreshold:
+            self.last_pose.x = self.pose.x
+            self.last_pose.x = self.pose.y
+            self.index_position -= 1
 
         # set dynamic bounds to the left and right of the central position
         leftBound = self.index_position - self.view_width
