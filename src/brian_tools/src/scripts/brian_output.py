@@ -1,5 +1,5 @@
+#!/usr/bin/env python
 
-from bs4 import Tag
 import rospy
 from std_msgs.msg import Float32, Float32MultiArray 
 from localizer_dwm1001.msg import Tag

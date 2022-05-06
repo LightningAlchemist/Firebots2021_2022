@@ -8,6 +8,8 @@
 #entering 's' on the X input will send a stop signal, but Y will stil be asked for, mayble ill fix this later.
 #program should deal with incorrect inputs properly, valid inputs are: 's', interger.
 
+#this is just a copy of execute_move
+
 
 #imports
 import rospy

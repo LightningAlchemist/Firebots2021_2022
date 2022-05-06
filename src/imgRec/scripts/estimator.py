@@ -38,8 +38,10 @@ class Estimator:
         rospy.init_node('estimator_listener', anonymous=False)
         rospy.Subscriber('img_rec_line', Float32, self.getRedScore)
         #rospy.Subscriber('odom', Odometry, self.getPosition)
-        rospy.Subscriber('/dwm1001/tag', Tag, self.getPosition) # subscribe tag message
-        self.pub = rospy.Publisher('estimated_state', Float32MultiArray, queue_size=5)
+        #rospy.Subscriber('/dwm1001/tag', Tag, self.getPosition) # subscribe tag message
+        rospy.Subscriber('filtered_pos', Tag, self.getPosition) # subscribe tag message
+
+	self.pub = rospy.Publisher('estimated_state', Float32MultiArray, queue_size=5)
 
         self.distanceThreshold = 0.1  # The linear travel distance that constitutes a move to another grid
         self.redThreshold = 0.01  # the threshold to determine if the grid is on fire
