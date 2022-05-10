@@ -4,6 +4,7 @@ import numpy
 import rospy
 import roslib
 import math
+import rosbag
 
 from cv2 import sqrt
 #mport tf2_py
@@ -43,7 +44,7 @@ class Estimator:
 
 	self.pub = rospy.Publisher('estimated_state', Float32MultiArray, queue_size=5)
 
-        self.distanceThreshold = 0.1  # The linear travel distance that constitutes a move to another grid
+        self.distanceThreshold = 0.003333  # The linear travel distance that constitutes a move to another grid
         self.redThreshold = 0.01  # the threshold to determine if the grid is on fire
         self.FPR = 0.1  # false positive rate
         self.FNR = 0.1  # false negative rate
@@ -63,6 +64,8 @@ class Estimator:
         self.delta_pose = Vector3() # difference between current and last position
         self.last_pose.x = self.pose.x #last position = current position
         self.last_pose.y = self.pose.y
+        
+        self.bag = rosbag.Bag('estimator_info', 'w')
 
        # def getPosition(location): #get position from DecaWave topic Distance from starting position
         #    coordinates = location.data
@@ -86,11 +89,7 @@ class Estimator:
         self.delta_pose.x = self.pose.x - self.last_pose.x
         self.delta_pose.y = self.pose.y - self.last_pose.y
 
-        dist = math.sqrt(math.pow(self.delta_pose.x, 2 ) + math.pow(self.delta_pose.y, 2))
-
-        #angle between last and current position
-        if dist > 0:
-            theta1 = acos(((self.delta_pose.x)/(dist)))
+        dist = self.delta_pose.x
 
         #if dif >= self.distanceThreshold:
             #self.last_odom_position['x'] = self.odom_pos.x
@@ -100,6 +99,11 @@ class Estimator:
             self.last_pose.x = self.pose.x
             self.last_pose.x = self.pose.y
             self.index_position += 1
+            
+        elif dist <= self.distanceThreshold:
+            self.last_pose.x = self.pose.x
+            self.last_pose.x = self.pose.y
+            self.index_position -= 1
 
         # set dynamic bounds to the left and right of the central position
         leftBound = self.index_position - self.view_width
@@ -128,6 +132,7 @@ class Estimator:
         pubdata = Float32MultiArray()
         pubdata.data = self.estimated_state
         self.pub.publish(pubdata)
+        self.bag.write('state', pubdata)
         #print(self.estimated_state).
 
 
