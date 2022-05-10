@@ -19,8 +19,9 @@ class PathPlan:
         rospy.Subscriber('estimated_state', Float32MultiArray, self.getState) # subscribe tag message
         rospy.Subscriber('filtered_pos', Vector3, self.getPosition) # subscribe estimator message
 
-        self.pub = rospy.Publisher('desired_position', Vector3, queue_size=10)
-        
+        self.pub_desired_position = rospy.Publisher('c', Vector3, queue_size=1)
+        self.pub_entropy = rospy.Publisher('entropy', Float32MultiArray, queue_size=1)
+
         self.des_pos = Vector3()
         self.offset = 0
         self.slice_size = 150
@@ -85,15 +86,19 @@ class PathPlan:
         self.des_pos.y = self.pose.y
         
         #send position and print it
-	#rospy.loginfo(self.pose)        
-	#rospy.loginfo(self.des_pos)
-        self.pub.publish(self.des_pos)       
+	    #rospy.loginfo(self.pose)        
+	    #rospy.loginfo(self.des_pos)
+        #pub_entropy = Float32MultiArray()
+        #pub_entropy = self.entropy
+
+        self.pub_desired_position.publish(self.des_pos)    
+        #self.pub_entropy.publish(pub_entropy) 
 
 if __name__ == "__main__":
     path_plan = PathPlan();
     while not rospy.is_shutdown():
-        #print('desired position: ', path_plan.des_pos)
+        print('desired position: ', path_plan.des_pos)
 	#print('subscribed state: ', path_plan.estate.data)
-	print('entropy: ', path_plan.entropy)  
+	#print('entropy: ', path_plan.entropy)  
 	path_plan.main()
         rospy.sleep(0.1) # 10Hz
