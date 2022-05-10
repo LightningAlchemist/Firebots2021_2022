@@ -47,7 +47,7 @@ class Estimator:
         self.redThreshold = 0.01  # the threshold to determine if the grid is on fire
         self.FPR = 0.1  # false positive rate
         self.FNR = 0.1  # false negative rate
-        self.num_locations = 10;
+        self.num_locations = 150;
         self.estimated_state = [0.5] * self.num_locations  # list of 100 locations with initial probability of 0.5
 
         self.index_position = 0  # linear index position
@@ -134,8 +134,8 @@ class Estimator:
 if __name__ == "__main__":
     estimator = Estimator();
     while not rospy.is_shutdown():
-        #print('est state: ', estimator.estimated_state)
-        print("last position x,y: {}, {}".format(estimator.last_pose.x, estimator.last_pose.y))
-        print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
+        print('est state: ', estimator.estimated_state)
+        #print("last position x,y: {}, {}".format(estimator.last_pose.x, estimator.last_pose.y))
+        #print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
         estimator.main()
         rospy.sleep(1)
