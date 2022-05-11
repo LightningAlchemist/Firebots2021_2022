@@ -25,7 +25,7 @@ class PathPlan:
         self.pub_entropy = rospy.Publisher('entropy', Float32MultiArray, queue_size=1)
 
         self.des_pos = Vector3()
-        self.offset = 0
+        self.offset = 0.71
         self.slice_size = 150
         self.led_length = 4.9022
         self.index_distance = self.led_length / self.slice_size
@@ -33,12 +33,13 @@ class PathPlan:
         self.entropy = np.zeros((self.slice_size))
         self.desired_index = 0
         self.estate = Float32MultiArray()
-        self.rob_index = int(
-            min(math.floor(self.pose.x / self.index_distance), 149))  # prevent out of bound, rob_index is pose.x
+        self.rob_index = 0
 
         # initialize desired postion = current position
         self.des_pos.z = self.pose.z
         self.des_pos.x = self.pose.x
+        while(not self.pose.y):
+            continue
         self.des_pos.y = self.pose.y
 
     def getState(self, data):
@@ -52,6 +53,9 @@ class PathPlan:
         # Binary entropy calculation
         # entropy = -est_state.*log2(est_state)-(1-est_state).*log2(1-est_state); <= matlab code
         # entropy is max at 1 when estate is 0.5 => rate of decrement increases as estate decrease
+
+        self.rob_index = int(
+            min(math.floor((self.pose.x - self.offset) / self.index_distance), 149))  # prevent out of bound, rob_index is pose.x
         for i in range(0, self.slice_size):
             if (len(self.estate.data) != 0):  # take some time to sync
                 self.entropy[i] = -self.estate.data[i] * math.log(self.estate.data[i], 2.0) - (
@@ -67,27 +71,35 @@ class PathPlan:
         # entropy_left = sum(self.entropy(ind1:self.rob_index-1));
         # get the sum of entropy between the indices
         entropy_left = np.sum(self.entropy[int(ind1):int(self.rob_index - 1)])
+        print('left total',entropy_left, ind1, self.rob_index)
         # entropy_right = sum(entropy((rob_index+1):ind2));
         # get the sum of entropy between the indices
         entropy_right = np.sum(self.entropy[int(self.rob_index + 1):int(ind2)])
+        print('right total',entropy_right, ind2, self.rob_index)
 
         # Note: Added bias to move towards center of map (this takes effect
         # when entropy values are similar)
 
         if self.rob_index > self.slice_size / 2:
             if (entropy_left + 3) > entropy_right:
-                self.desired_index = max(0, self.rob_index - 1)
+                #self.desired_index = max(0, self.rob_index - 1)
+                self.desired_index = 0
             else:
-                self.desired_index = min(self.slice_size - 1, self.rob_index + 1)
+                #self.desired_index = min(self.slice_size - 1, self.rob_index + 1)
+                self.desired_index = 149
         else:
             if entropy_left > (entropy_right + 1.5):
-                self.desired_index = max(0, self.rob_index - 1)
+                #self.desired_index = max(0, self.rob_index - 1)
+                self.desired_index = 0
             else:
-                self.desired_index = min(self.slice_size - 1, self.rob_index + 1)
+                #self.desired_index = min(self.slice_size - 1, self.rob_index + 1)
+                self.desired_index = 149
+
+        #print('entropy: ', self.rob_index)
 
         self.des_pos.z = 0
-        self.des_pos.x = self.desired_index * self.index_distance
-        self.des_pos.y = self.pose.y
+        self.des_pos.x = float(self.desired_index * self.index_distance + self.offset)
+        #self.des_pos.y = self.pose.y
         
         #send position and print it
 	    #rospy.loginfo(self.pose)        
@@ -101,8 +113,8 @@ class PathPlan:
 if __name__ == "__main__":
     path_plan = PathPlan();
     while not rospy.is_shutdown():
-        # print('desired position: ', path_plan.des_pos)
+        #print('desired position: ', path_plan.des_pos)
         # print('subscribed state: ', path_plan.estate.data)
-        print('entropy: ', path_plan.entropy)
+        #print('entropy: ', path_plan.entropy)
         path_plan.main()
-        rospy.sleep(0.1)  # 10Hz
+        rospy.sleep(2)  # 10Hz

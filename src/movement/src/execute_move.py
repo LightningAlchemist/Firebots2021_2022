@@ -95,6 +95,8 @@ class ExecuteMove:
             self.last_pos.y = self.pose.y
             print("this ")
             self.vel_msg.linear.x = .11
+            if self.des_vec.x < 0:
+                    self.vel_msg.linear.x *= -1
             self.velocity_publisher.publish(self.vel_msg)
 
         # go straight while checking for 2 seconds
@@ -154,16 +156,18 @@ class ExecuteMove:
                 self.turn_angle = theta1 - theta2
                 # destination is behind the bot
                 if self.des_vec.x < 0:
+                    print('')
+                    print('Destination left of robot, moving backwards')
                     if self.turn_angle > 0:
                         self.turn_angle -= pi
                     else:
                         self.turn_angle += pi
 
                 # make it so it does not go turn to the right place but in wrong direction
-                if self.turn_angle > pi:
-                    self.turn_angle -= 2 * pi
-                if self.turn_angle < -pi:
-                    self.turn_angle += 2 * pi
+                # if self.turn_angle > pi:
+                #     self.turn_angle -= 2 * pi
+                # if self.turn_angle < -pi:
+                #     self.turn_angle += 2 * pi
 
                 print("\nI am going to turn:  ")
                 print(self.turn_angle)
@@ -187,17 +191,17 @@ class ExecuteMove:
                 # raw_input("yeet")
                 self.vel_msg.linear.x = .11
 				# move backwards if location is behind robot
-				if self.des_vec.x < 0:
-					self.vel_msg.linear.x *= -1
+                if self.des_vec.x < 0:
+                    self.vel_msg.linear.x *= -1
                 self.velocity_publisher.publish(self.vel_msg)
 
                 # set turn and velocity, maybe have some error for turn to not trigger, test with controller to see if signs are coorect
-                if (self.right):
-                    self.vel_msg.angular.z = -2
-                    self.velocity_publisher.publish(self.vel_msg)
-                else:
-                    self.vel_msg.angular.z = 2
-                    self.velocity_publisher.publish(self.vel_msg)
+                # if (self.right):
+                #     self.vel_msg.angular.z = -2
+                #     self.velocity_publisher.publish(self.vel_msg)
+                # else:
+                #     self.vel_msg.angular.z = 2
+                #     self.velocity_publisher.publish(self.vel_msg)
 
                 # need to manage positive or negetive turn direction, acos probably does not give me the direction
                 # loop repeats every 10th of a second, checking if we are at the position, still need to introduce error to position check

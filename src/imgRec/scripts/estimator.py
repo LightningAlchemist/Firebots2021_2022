@@ -143,4 +143,4 @@ if __name__ == "__main__":
         #print("last position x,y: {}, {}".format(estimator.last_pose.x, estimator.last_pose.y))
         #print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
         estimator.main()
-        rospy.sleep(1)
+        rospy.sleep(2)
