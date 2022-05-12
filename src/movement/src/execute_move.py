@@ -25,39 +25,39 @@ class ExecuteMove:
         rospy.init_node('executing_movement', anonymous=False)
 
         self.velocity_publisher = rospy.Publisher('cmd_vel', Twist, queue_size=10)
-        self.turn_ang = rospy.Publisher('turn_angle', Float64, queue_size=10)
+        #self.turn_ang = rospy.Publisher('turn_angle', Float64, queue_size=10)
 
         ##################################################################
         # rospy.Subscriber('/hedge_pos', Vector3, self.update_pose)
         # rospy.Subscriber('/dwm1001/tag1', Tag, self.update_pose)
 
-        rospy.Subscriber('filtered_pos', Vector3, self.update_pose)
-        rospy.Subscriber('desired_position', Vector3, self.update_des_pos)
-        rospy.Subscriber('delay', Point, self.update_delay_time)
+        rospy.Subscriber('filtered_pos', Vector3, self.update_pose)        #Update current position from low pass filter
+        rospy.Subscriber('desired_position', Vector3, self.update_des_pos) #Update destination position from path_plan.py
+        #rospy.Subscriber('delay', Point, self.update_delay_time)
 
-        self.rate = rospy.Rate(10)
+        #self.rate = rospy.Rate(10)
 
         ##################################################################
 
-        self.delta_pos = Vector3()
-        self.pose = Vector3()
+        self.delta_pos = Vector3()  #Member variable for change in position
+        self.pose = Vector3() #Member variable for current position
         # self.pose = Tag()
-        self.des_pos = Vector3()
-        self.des_vec = Vector3()
-        self.turn_angle = 0.000
-        self.ang_vel = 2
-        self.stop = True
-        self.margin = .2
-        self.last_pos = Vector3()
-        self.rate = rospy.Rate(1)
-        self.rate.sleep()
+        self.des_pos = Vector3() #Member variable for destination position
+        self.des_vec = Vector3() #Member variable for destination vector
+        self.turn_angle = 0.000 #Set initial turn angle to zero
+        self.ang_vel = 2 #Set initial angular velocity to 2
+        self.stop = True #Initial state set to stop
+        self.margin = 0.05 #Margin for _________ set to 0.05
+        self.last_pos = Vector3() #Saves the previous position
+        self.rate = rospy.Rate(1) #Cycles at a rate of 1 hz
+        self.rate.sleep() #Sleep for 1 sec
 
-        self.rate.sleep()
-        self.rate = rospy.Rate(10)
+        self.rate.sleep() #Sleep for another second
+        self.rate = rospy.Rate(10) #set rospy rate to 10 hz
 
         self.last_pos.x = self.pose.x
         self.last_pos.y = self.pose.y
-
+        
         # make it not go to 0,0 right off the bat
         self.des_pos.x = self.pose.x
         self.des_pos.y = self.pose.y
@@ -85,151 +85,30 @@ class ExecuteMove:
     # delta_pos is change in position from last position
     # angular velocity vector should be in radians per second
     def move(self):
-        # allow movement
+        #get current direction
+        #if delta_pos.x > 0 => robot is going right
+        #if delta_pos.x < 0 => robot is going left
+        
+        self.delta_pos.x = self.pose.x - self.last_pos.x
+        self.delta_pos.y = self.pose.y - self.last_pos.y;
+        
         if (self.check_pos() == False):
             self.stop = False
-
+        
         if self.stop is False:
             # start moving forward
             self.last_pos.x = self.pose.x
             self.last_pos.y = self.pose.y
-            print("this ")
-            self.vel_msg.linear.x = .11
+            self.vel_msg.linear.x = .05
             if self.des_vec.x < 0:
-                    self.vel_msg.linear.x *= -1
-            self.velocity_publisher.publish(self.vel_msg)
-
-        # go straight while checking for 2 seconds
-        turn_time = 2
-        self.rate = rospy.Rate(10)
-        while turn_time > 0 and self.stop is False:
-            # print("straight loopy")
-            if self.check_pos():
-                print("reached")
-                self.stop = True
-                self.vel_msg.linear.x = 0
-                self.velocity_publisher.publish(self.vel_msg)
-                break
-            turn_time = turn_time - .1
-            self.rate.sleep()
-
-        # self.rate.sleep()
-
-        print("\n I am at: ")
-        print(self.pose.x)
-        print(", ")
-        print(self.pose.y)
-        print("\n my last position was: ")
-        print(self.last_pos.x)
-        print(", ")
-        print(self.last_pos.y)
-
-        # get two the two vectors
-        if self.stop is False:
-            print("\nI am about to calculate")
-            self.des_vec.x = self.des_pos.x - self.pose.x
-            self.des_vec.y = self.des_pos.y - self.pose.y
-            self.delta_pos.x = self.pose.x - self.last_pos.x
-            self.delta_pos.y = self.pose.y - self.last_pos.y
-            print("\ndes_vec.x: ")
-            print(self.des_vec.x)
-            print("\ndes_vec.y: ")
-            print(self.des_vec.y)
-            print("\ndelta_pos.x: ")
-            print(self.delta_pos.x)
-            print("\nself.delta_pos.y: ")
-            print(self.delta_pos.y)
-
-            if not ((self.delta_pos.x == 0 and self.delta_pos.y == 0) or (self.des_vec.x == 0 and self.des_vec.y == 0)):
-
-                # angle between our current trajectory and x axis(x axis of marvel mind sensors)
-                theta1 = acos(((self.delta_pos.x) / (sqrt(self.delta_pos.y ** 2 + self.delta_pos.x ** 2))))
-                if (self.pose.y < self.last_pos.y):
-                    theta1 = (-1) * theta1
-
-                # angle between our desired trajectory and the x axis
-                theta2 = acos(((self.des_vec.x) / (sqrt(self.des_vec.y ** 2 + self.des_vec.x ** 2))))
-                if (self.des_pos.y < self.pose.y):
-                    theta2 = (-1) * theta2
-
-                # angle needed to be turned(positive for right turn)
-                self.turn_angle = theta1 - theta2
-                # destination is behind the bot
-                if self.des_vec.x < 0:
-                    print('')
-                    print('Destination left of robot, moving backwards')
-                    if self.turn_angle > 0:
-                        self.turn_angle -= pi
-                    else:
-                        self.turn_angle += pi
-
-                # make it so it does not go turn to the right place but in wrong direction
-                # if self.turn_angle > pi:
-                #     self.turn_angle -= 2 * pi
-                # if self.turn_angle < -pi:
-                #     self.turn_angle += 2 * pi
-
-                print("\nI am going to turn:  ")
-                print(self.turn_angle)
-
-                # get turn direction
-                if (self.turn_angle > 0):
-                    self.right = True
-                else:
-                    self.right = False
-                    self.turn_angle = self.turn_angle * (-1)
-
-                turn_time = self.turn_angle / self.ang_vel
-
-                print("\n I am going to turn for:  ")
-                print(turn_time)
-                self.rate = rospy.Rate(10)
-
-                self.vel_msg.linear.x = 0
-                self.vel_msg.angular.z = 0
-                self.velocity_publisher.publish(self.vel_msg)
-                # raw_input("yeet")
-                self.vel_msg.linear.x = .11
-				# move backwards if location is behind robot
-                if self.des_vec.x < 0:
-                    self.vel_msg.linear.x *= -1
-                self.velocity_publisher.publish(self.vel_msg)
-
-                # set turn and velocity, maybe have some error for turn to not trigger, test with controller to see if signs are coorect
-                # if (self.right):
-                #     self.vel_msg.angular.z = -2
-                #     self.velocity_publisher.publish(self.vel_msg)
-                # else:
-                #     self.vel_msg.angular.z = 2
-                #     self.velocity_publisher.publish(self.vel_msg)
-
-                # need to manage positive or negetive turn direction, acos probably does not give me the direction
-                # loop repeats every 10th of a second, checking if we are at the position, still need to introduce error to position check
-                while turn_time > .1 and self.stop is False:
-                    self.rate.sleep()
-                    if self.check_pos():
-                        print("reached")
-                        self.stop = True
-                        self.vel_msg.angular.z = 0
-                        self.vel_msg.linear.x = 0
-                        self.velocity_publisher.publish(self.vel_msg)
-                        break
-                    turn_time -= .1
-                    print("\n I am turning right now")
-                self.rate = rospy.Rate(1 / turn_time)
-                self.rate.sleep()
-                if self.check_pos():
-                    self.stop = True
-                    self.vel_msg.angular.z = 0
-                    self.vel_msg.linear.x = 0
-                    self.velocity_publisher.publish(self.vel_msg)
-
-                self.vel_msg.angular.z = 0
-                self.velocity_publisher.publish(self.vel_msg)
-                # set back to going straingt right here or ramain still
-                self.rate = rospy.Rate(1)
-        self.turn_ang.publish(self.turn_angle)
-        # rospy.spin()
+                self.vel_msg.linear.x *= -1
+        
+        self.velocity_publisher.publish(self.vel_msg)
+        #self.vel_msg.angular.z = 0
+        # set back to going straingt right here or ramain still
+        self.rate = rospy.Rate(1)
+        #self.turn_ang.publish(self.turn_angle)
+        #rospy.spin()
         self.rate = rospy.Rate(1)
 
     # self.rate.sleep()
@@ -267,17 +146,12 @@ class ExecuteMove:
 
     # checks if in the acceptable margin from the desired position
     def check_pos(self):
-        if (self.des_pos.x > self.pose.x + self.margin):
+        if (self.des_pos.x > self.pose.x - self.margin) and (self.des_pos.x < self.pose.x):
             return False
-        elif (self.des_pos.x < self.pose.x):  # self.des_pos.x < self.pose.x - self.margin
-            return False
-        elif (self.des_pos.y < self.pose.y):  # self.des_pos.y < self.pose.y - self.margin
-            return False
-        elif (self.des_pos.y > self.pose.y + self.margin):
+        elif (self.des_pos.x > self.pose.x) and (self.des_pos.x < self.pose.x + self.margin):
             return False
         else:
             return True
-
 
 if __name__ == '__main__':
     cl = ExecuteMove()

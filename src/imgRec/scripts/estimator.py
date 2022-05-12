@@ -75,9 +75,9 @@ class Estimator:
     def decayBelief(self):
         for idx, belief in enumerate(self.estimated_state):
             if belief > 0.5:
-                self.estimated_state[idx] = 0.998 * belief  # magic number: reduce current belief by 0.2% every spin to tend to 0.5
+                self.estimated_state[idx] = 1 * belief  # magic number: reduce current belief by 0.2% every spin to tend to 0.5
             else:
-                self.estimated_state[idx] = max(0.01, 1.01 * belief)  # magic number: increased belief by 1% every spin to tend to 0.5
+                self.estimated_state[idx] = max(0.01, 1 * belief)  # magic number: increased belief by 1% every spin to tend to 0.5
 
     def main(self):
         # check if robot has moved to the next grid
@@ -139,7 +139,7 @@ class Estimator:
 if __name__ == "__main__":
     estimator = Estimator();
     while not rospy.is_shutdown():
-        #print('est state: ', estimator.estimated_state)
+        print('est state: ', estimator.estimated_state)
         #print("last position x,y: {}, {}".format(estimator.last_pose.x, estimator.last_pose.y))
         #print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
         estimator.main()
