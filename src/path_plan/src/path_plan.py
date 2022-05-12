@@ -81,14 +81,16 @@ class PathPlan:
         # when entropy values are similar)
 
         if self.rob_index > self.slice_size / 2:
-            if (entropy_left + 3) > entropy_right:
+            #if (entropy_left + 3) > entropy_right: add bias due to current position
+            if entropy_left > entropy_right:
                 #self.desired_index = max(0, self.rob_index - 1)
                 self.desired_index = 0
             else:
                 #self.desired_index = min(self.slice_size - 1, self.rob_index + 1)
                 self.desired_index = 149
         else:
-            if entropy_left > (entropy_right + 1.5):
+            #if entropy_left > (entropy_right + 1.5):
+            if entropy_left > entropy_right:
                 #self.desired_index = max(0, self.rob_index - 1)
                 self.desired_index = 0
             else:
@@ -113,7 +115,8 @@ class PathPlan:
 if __name__ == "__main__":
     path_plan = PathPlan();
     while not rospy.is_shutdown():
-        #print('desired position: ', path_plan.des_pos)
+        print('current position: ', path_plan.pose)
+        print('desired position: ', path_plan.des_pos)
         # print('subscribed state: ', path_plan.estate.data)
         #print('entropy: ', path_plan.entropy)
         path_plan.main()

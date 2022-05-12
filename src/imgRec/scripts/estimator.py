@@ -139,7 +139,7 @@ class Estimator:
 if __name__ == "__main__":
     estimator = Estimator();
     while not rospy.is_shutdown():
-        print('est state: ', estimator.estimated_state)
+        #print('est state: ', estimator.estimated_state)
         #print("last position x,y: {}, {}".format(estimator.last_pose.x, estimator.last_pose.y))
         #print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
         estimator.main()

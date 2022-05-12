@@ -10,7 +10,6 @@
 
 #this is just a copy of execute_move
 
-
 #imports
 import rospy
 from std_msgs.msg import String
