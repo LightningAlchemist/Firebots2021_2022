@@ -6,7 +6,7 @@ import math
 
 from cv2 import sqrt
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import Bool, Float32, String, Float32MultiArray
+from std_msgs.msg import Bool, Float32, String, Float32MultiArray, Int16
 
 
 # from nav_msgs.msg import Odometry
@@ -23,6 +23,7 @@ class PathPlan:
 
         self.pub_desired_position = rospy.Publisher('desired_position', Vector3, queue_size=1)
         self.pub_entropy = rospy.Publisher('entropy', Float32MultiArray, queue_size=1)
+        self.pub_rob_index = rospy.Publisher('rob_index', Int16, queue_size=1)
 
         self.des_pos = Vector3()
         self.offset = 0.71
@@ -33,6 +34,7 @@ class PathPlan:
         self.entropy = np.zeros((self.slice_size))
         self.desired_index = 0
         self.estate = Float32MultiArray()
+        self.rob_index = Int16()
         self.rob_index = 0
 
         # initialize desired postion = current position
@@ -110,7 +112,8 @@ class PathPlan:
         #pub_entropy = Float32MultiArray()
         #pub_entropy = self.entropy
 
-        self.pub_desired_position.publish(self.des_pos)    
+        self.pub_desired_position.publish(self.des_pos) 
+        self.pub_rob_index.publish(self.rob_index)   
         #self.pub_entropy.publish(pub_entropy) 
 
 if __name__ == "__main__":

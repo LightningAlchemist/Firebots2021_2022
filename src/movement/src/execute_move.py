@@ -1,116 +1,110 @@
 #!/usr/bin/env python
-
-# Author: Alex Marlow
-
-# Editor: David Babin
-
-# Modified: Paul Park
-
 import rospy
 import numpy
+import math
 
-####################################################
-# from localizer_dwm1001.msg import Tag
-####################################################
-
-from geometry_msgs.msg import Twist, Vector3, Pose, Point
-from std_msgs.msg import String, Float64
-from math import pow, atan2, sqrt, acos, pi, sin, cos, floor
-
+from geometry_msgs.msg import Twist, Vector3, Pose
+from std_msgs.msg import Float64
+from math import pow, sqrt, acos
 
 class ExecuteMove:
 
     def __init__(self):
 
         rospy.init_node('executing_movement', anonymous=False)
-
+        rospy.Subscriber('filtered_pos', Vector3, self.update_pose) 
+        rospy.Subscriber('desired_position', Vector3, self.update_des_pos)
         self.velocity_publisher = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-        #self.turn_ang = rospy.Publisher('turn_angle', Float64, queue_size=10)
-
-        ##################################################################
-        # rospy.Subscriber('/hedge_pos', Vector3, self.update_pose)
-        # rospy.Subscriber('/dwm1001/tag1', Tag, self.update_pose)
-
-        rospy.Subscriber('filtered_pos', Vector3, self.update_pose)        #Update current position from low pass filter
-        rospy.Subscriber('desired_position', Vector3, self.update_des_pos) #Update destination position from path_plan.py
-        #rospy.Subscriber('delay', Point, self.update_delay_time)
-
         self.rate = rospy.Rate(10)
-
-        ##################################################################
-
-        self.delta_pos = Vector3()  #Member variable for change in position
-        self.pose = Vector3() #Member variable for current position
-        # self.pose = Tag()
-        self.des_pos = Vector3() #Member variable for destination position
-        self.des_vec = Vector3() #Member variable for destination vector
-        self.turn_angle = 0.000 #Set initial turn angle to zero
-        self.ang_vel = 2 #Set initial angular velocity to 2
-        self.stop = True #Initial state set to stop
-        self.margin = 0.05 #Margin for _________ set to 0.05
-        self.last_pos = Vector3() #Saves the previous position
+        self.delta_pos = Vector3()
+        self.pose = Vector3()
+        self.des_pos = Vector3()
+        #self.des_vec = Vector3()
+        self.last_pos = Vector3()
+        #self.turn_angle = 0.000
+        #self.ang_vel = 2
+        self.stop_x = True 
+        self.stop_y = True 
+        self.margin_x = 0.05
+        self.margin_y = 0.03
         self.rate = rospy.Rate(1) #Cycles at a rate of 1 hz
-        self.rate.sleep() #Sleep for 1 sec
-
-        self.rate.sleep() #Sleep for another second
-        self.rate = rospy.Rate(10) #set rospy rate to 10 hz
-
-        self.last_pos.x = self.pose.x #Update last position x 
-        self.last_pos.y = self.pose.y#Update last position y
-        
+        self.rate.sleep() 
+        self.rate.sleep()
+        self.rate = rospy.Rate(1) #set rospy rate to 10 hzs
+        self.last_pos.x = self.pose.x 
+        self.last_pos.y = self.pose.y
         # make it not go to 0,0 right off the bat
-        self.des_pos.x = self.pose.x #Make destination equal to current position
-        self.des_pos.y = self.pose.y #Make destination equal to current position
+        self.des_pos.x = self.pose.x 
+        self.des_pos.y = self.pose.y
         print("initialized to: ")
         print(self.des_pos.x)
         print(self.des_pos.y)
         print("from")
         print(self.pose.x)
         print(self.pose.y)
-
-        self.vel_msg = Twist() #Create a twist object
-
-        self.vel_msg.linear.x = 0 # Set linear x velocity to zero
-        self.vel_msg.angular.z = 0#Set angular z velocity to zero
-
-        self.vel_msg.linear.y = 0  #Set linear velocity y to zero
-        self.vel_msg.linear.z = 0 #Set linear velocity z to zero
-        self.vel_msg.angular.x = 0 #Set angular velocity z to zero
-        self.vel_msg.angular.y = 0 #Set angular velocity y to zero
-
-        # should not move
-        self.velocity_publisher.publish(self.vel_msg) # Publish the twist object
+        self.vel_msg = Twist()
+        self.vel_msg.linear.x = 0 
+        self.vel_msg.angular.z = 0
+        self.vel_msg.linear.y = 0 
+        self.vel_msg.linear.z = 0 
+        self.vel_msg.angular.x = 0 
+        self.vel_msg.angular.y = 0
+        self.velocity_publisher.publish(self.vel_msg)
 
     # des_vec is vector from current to desired
     # delta_pos is change in position from last position
     # angular velocity vector should be in radians per second
     def move(self):
         #get current direction
-        #if delta_pos.x > 0 => robot is going right
-        #if delta_pos.x < 0 => robot is going left
-        
-        self.delta_pos.x = self.pose.x - self.last_pos.x; #Change in x is current - last position
-        self.delta_pos.y = self.pose.y - self.last_pos.y; #Change in  is current - last position
-        
-        if self.check_pos(): #If the robot is not within the margin from the desired position
-            self.stop = False       #Don't stop
-        
-        #self.vel_msg.linear.x = -0.03
+        self.delta_pos.x = self.pose.x - self.last_pos.x; 
+        self.delta_pos.y = self.pose.y - self.last_pos.y;
+        #if the robot is not within the margin from the desired position
+        #current position - margin < desired position < current position -> stop = true
+        #current position < desired position < current position + margin -> stop = true
+        #else -> stop = false
+        if self.check_pos_x():
+            self.stop_x = False
+        #determine the deriction beased on desired position
+        if self.stop_x is False:
+            #print(self.des_pos.x)
+            self.last_pos.x = self.pose.x
+            if (self.des_pos.x < self.pose.x): 
+                self.vel_msg.linear.x = -0.1 
+            elif (self.des_pos.x > self.pose.x):
+                self.vel_msg.linear.x = 0.1
+        #compare current and desire y position        
+        if self.check_pos_y():
+            self.stop_y = False
+        #make correction only during robot is moving
+#        if self.stop_y is False:
+#            print(self.des_pos.y)
+#            self.last_pos.y = self.pose.y
+#            target_x = self.des_pos.x - self.pose.x
+#            target_y = self.des_pos.y - self.pose.y
+#            dist2 = math.sqrt(math.pow(self.delta_pos.x, 2 ) + math.pow(self.delta_pos.y, 2)) 
+#            theta2 = acos(((self.delta_pos.x)/(dist2))) # angle between last and current position
+#            theta2 = (theta2 * math.pi)/180                        
+#            dist1 = math.sqrt(math.pow(target_x, 2 ) + math.pow(target_y, 2)) 
+#            theta1 = acos(((target_x)/(dist1))) # angle between last and current position
+#            theta1 = (theta1 * math.pi)/180
+#            theta = abs(theta1 - theta2)
+#            print(theta)
+            #base is going to left and des_pos.y is on the left -> counter clockwise
+#            if (self.des_pos.x < self.pose.x) and (self.des_pos.y < self.pose.y): 
+#                self.vel_msg.angular.z = -theta
+            #base is going to left and des_pos.y is on the right -> clockwise
+#            elif (self.des_pos.x < self.pose.x) and (self.des_pos.y > self.pose.y):
+#                self.vel_msg.angular.z = theta
+#            #base is going to right and des_pos.y is on the left -> counter clockwise
+#            elif (self.des_pos.x > self.pose.x) and (self.des_pos.y > self.pose.y):
+#                self.vel_msg.angular.z = theta
+            #base is going to right and des_pos.y is on the left -> clockwise
+#            elif (self.des_pos.x > self.pose.x) and (self.des_pos.y < self.pose.y):
+#                self.vel_msg.angular.z = -theta
 
-        if self.stop is False:
-            # start moving forward
-            print(self.des_pos.x)
-            self.last_pos.x = self.pose.x #Update last position x
-            self.last_pos.y = self.pose.y #Update last position y
-            
-            if (self.des_pos.x < self.pose.x): #Id the desitanation is less than position and the change in position is negative 
-                self.vel_msg.linear.x = -0.1 #set x velocity to -0.
-            elif (self.des_pos.x > self.pose.x): #IF the destination is greater than pos and the change in pos is negateve
-                self.vel_msg.linear.x = 0.1       #Set linear velocity to 0.1
-
-        self.velocity_publisher.publish(self.vel_msg) #Publish velocity
+        self.velocity_publisher.publish(self.vel_msg)
         #self.vel_msg.angular.z = 0
-        # set back to going straingt right here or ramain still
+        #set back to going straingt right here or ramain still
         #self.rate = rospy.Rate(1) #Set Rospy rate to 1
         #self.turn_ang.publish(self.turn_angle)
         #rospy.spin()
@@ -119,7 +113,7 @@ class ExecuteMove:
     #self.rate.sleep()
 
     # possibly need to introduce turning error
-
+    
     # maybe want to round the numbers depending on testing results
     def update_delay_time(self, data):#Round numbers on testing times
         # print("\ndatax is: ")
@@ -150,15 +144,31 @@ class ExecuteMove:
         self.des_pos.y = data.y
 
     # checks if in the acceptable margin from the desired position
-    def check_pos(self):
-        if (self.des_pos.x > self.pose.x - self.margin) and (self.des_pos.x < self.pose.x):
-            print('exit condition 1')
+    def check_pos_x(self):
+        if (self.des_pos.x == self.pose.x):
             return False
-        elif (self.des_pos.x > self.pose.x) and (self.des_pos.x < self.pose.x + self.margin):
-            print('exit condition 2')
+        elif (self.des_pos.x > self.pose.x - self.margin_x) and (self.des_pos.x < self.pose.x):
+            #print('exit condition 1')
+            return False
+        elif (self.des_pos.x > self.pose.x) and (self.des_pos.x < self.pose.x + self.margin_x):
+            #print('exit condition 2')
             return False
         else:
-            print('exit condition 3')
+            #print('exit condition 3')
+            return True
+
+    # checks if in the acceptable margin from the desired position
+    def check_pos_y(self):
+        if (self.des_pos.y == self.pose.y):
+            return False
+        elif (self.des_pos.y > self.pose.y - self.margin_y) and (self.des_pos.y < self.pose.y):
+            #print('exit condition 1')
+            return False
+        elif (self.des_pos.y > self.pose.y) and (self.des_pos.y < self.pose.y + self.margin_y):
+            #print('exit condition 2')
+            return False
+        else:
+            #print('exit condition 3')
             return True
 
 if __name__ == '__main__':
@@ -166,6 +176,6 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         try:
             cl.move()
-            rospy.sleep(1)
+            rospy.sleep(0.5)
         except rospy.ROSInterruptException:
             pass

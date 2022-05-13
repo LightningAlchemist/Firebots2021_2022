@@ -111,16 +111,16 @@ def testCode(cam): #some test code that gets the picture converts to a numpy arr
 
 def testCode2(cam):
     i = 0;
-    while(i < 1):
+    rospy.init_node('img_rec', anonymous=True);
+    buffer = rospy.Publisher('img_rec_line', Float32, queue_size=1);
+    rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
         ret, frame = cam.read();
-        #cv.imshow('nanocam', frame[:,:,2])
-        cv.imshow('nanocam', frame)
-        #data2 = redScore(frame);
-        data = redScore2(frame);
-        #print("redScore = "+ str(data2));
-        print("redScore2 = " + str(data))
-        print(ledInFrame(data));
-        print("Frame")
+        cv.imshow('nanocam', frame);
+        frame = frame.astype(int);
+        data = redScore3(frame);
+        buffer.publish(data)
+        rate.sleep()
         if cv.waitKey(1)==ord('q'):
             break
     cam.release()

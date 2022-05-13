@@ -51,7 +51,7 @@ class Estimator:
         self.num_locations = 150
         self.estimated_state = [0.5] * self.num_locations  # list of 100 locations with initial probability of 0.5
 
-        self.index_position = floor(self.num_locations/2)  # linear index position to middle of strip
+        self.index_position = 0  # linear index position to left end of strip
         #self.odom_pos = Vector3()
         #self.odom_pos.z = 1
         #self.last_odom_position = {'x': 0, 'y':0}
@@ -68,8 +68,12 @@ class Estimator:
         while not self.pose.x and not self.pose.y:
             continue
 
-        self.left_bound = self.pose.x - (self.index_position * self.distanceThreshold)
-        self.right_bound = self.pose.x + ((self.num_locations - self.index_position)*self.distanceThreshold)
+        # self.left_bound = self.pose.x - (self.index_position * self.distanceThreshold)
+        # self.right_bound = self.pose.x + ((self.num_locations - self.index_position)*self.distanceThreshold)
+
+        x_offset = 0.71
+        self.left_bound = x_offset
+        self.right_bound = x_offset + (self.num_locations * self.distanceThreshold)
         
         # self.bag = rosbag.Bag('estimator_info', 'w')
 
