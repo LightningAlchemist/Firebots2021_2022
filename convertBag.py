@@ -31,7 +31,7 @@ print("Writing robot joint state data to CSV")
 with open('estimator_state.csv', mode='w') as data_file:
   data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
   flag = False
-  #data_writer.writerow(['time', 'estimated_state'])
+  #data_writer.writerow(['time', 'index_location, 'estimated_state'])
   for topic, msg, t in bag.read_messages():
     if not flag:
       title = []
