@@ -13,7 +13,7 @@ from geometry_msgs.msg import Vector3
 from std_msgs.msg import Bool, Float32, String, Float32MultiArray
 #from nav_msgs.msg import Odometry
 from localizer_dwm1001.msg import Tag
-from math import pow, acos
+from math import floor, pow, acos
 #import tf2_geometry_msgs
 #mport tf2_msgs
 #import tf2_ros
@@ -42,21 +42,21 @@ class Estimator:
         #rospy.Subscriber('/dwm1001/tag', Tag, self.getPosition) # subscribe tag message
         rospy.Subscriber('filtered_pos', Tag, self.getPosition) # subscribe tag message
 
-	self.pub = rospy.Publisher('estimated_state', Float32MultiArray, queue_size=5)
+        self.pub = rospy.Publisher('estimated_state', Float32MultiArray, queue_size=5)
 
-        self.distanceThreshold = 0.003333  # The linear travel distance that constitutes a move to another grid
-        self.redThreshold = 0.01  # the threshold to determine if the grid is on fire
+        self.distanceThreshold = 4.9022/150  # The linear travel distance that constitutes a move to another grid
+        self.redThreshold = 0.0001  # the threshold to determine if the grid is on fire
         self.FPR = 0.1  # false positive rate
         self.FNR = 0.1  # false negative rate
-        self.num_locations = 150;
+        self.num_locations = 150
         self.estimated_state = [0.5] * self.num_locations  # list of 100 locations with initial probability of 0.5
 
-        self.index_position = 0  # linear index position
+        self.index_position = floor(self.num_locations/2)  # linear index position to middle of strip
         #self.odom_pos = Vector3()
         #self.odom_pos.z = 1
         #self.last_odom_position = {'x': 0, 'y':0}
         #self.last_position = 0  # the previous position of the robot until distanceThreshold is exceeded
-        self.view_width = 0 # the number of indexes to the left and right of the position that are updated
+        self.view_width = 12 # the number of indexes to the left and right of the position that are updated
         self.redScore = 0
 
         self.pose = Tag() # dwm1001/tag1
@@ -64,8 +64,14 @@ class Estimator:
         self.delta_pose = Vector3() # difference between current and last position
         self.last_pose.x = self.pose.x #last position = current position
         self.last_pose.y = self.pose.y
+
+        while not self.pose.x and not self.pose.y:
+            continue
+
+        self.left_bound = self.pose.x - (self.index_position * self.distanceThreshold)
+        self.right_bound = self.pose.x + ((self.num_locations - self.index_position)*self.distanceThreshold)
         
-        self.bag = rosbag.Bag('estimator_info', 'w')
+        # self.bag = rosbag.Bag('estimator_info', 'w')
 
        # def getPosition(location): #get position from DecaWave topic Distance from starting position
         #    coordinates = location.data
@@ -75,9 +81,9 @@ class Estimator:
     def decayBelief(self):
         for idx, belief in enumerate(self.estimated_state):
             if belief > 0.5:
-                self.estimated_state[idx] = 1 * belief  # magic number: reduce current belief by 0.2% every spin to tend to 0.5
+                self.estimated_state[idx] = 0.998 * belief  # magic number: reduce current belief by 0.2% every spin to tend to 0.5
             else:
-                self.estimated_state[idx] = max(0.01, 1 * belief)  # magic number: increased belief by 1% every spin to tend to 0.5
+                self.estimated_state[idx] = max(0.01, 1.002 * belief)  # magic number: increased belief by 0.2% every spin to tend to 0.5
 
     def main(self):
         # check if robot has moved to the next grid
@@ -95,15 +101,22 @@ class Estimator:
             #self.last_odom_position['x'] = self.odom_pos.x
             #self.last_odom_position['y'] = self.odom_pos.y
 
-        if dist >= self.distanceThreshold:
-            self.last_pose.x = self.pose.x
-            self.last_pose.x = self.pose.y
-            self.index_position += 1
+        # if dist >= self.distanceThreshold:
+        #     self.last_pose.x = self.pose.x
+        #     self.last_pose.x = self.pose.y
+        #     self.index_position += 1
+
+        if self.pose.x >= self.left_bound and self.pose.x <= self.right_bound:
+            self.index_position = int(floor((self.pose.x - self.left_bound)/self.distanceThreshold))
+            print('index_pos', self.index_position)
+
+        elif(self.pose.x<self.left_bound):
+            self.index_position = 0;
+        elif(self.pose.x > self.right_bound):
+            self.index_position = self.num_locations-1
             
-        elif dist <= self.distanceThreshold:
-            self.last_pose.x = self.pose.x
-            self.last_pose.x = self.pose.y
-            self.index_position -= 1
+        # else:
+        #     raise IndexError('Robot out of bounds!')
 
         # set dynamic bounds to the left and right of the central position
         leftBound = self.index_position - self.view_width
@@ -132,7 +145,7 @@ class Estimator:
         pubdata = Float32MultiArray()
         pubdata.data = self.estimated_state
         self.pub.publish(pubdata)
-        self.bag.write('state', pubdata)
+        #self.bag.write('state', pubdata)
         #print(self.estimated_state).
 
 
@@ -141,6 +154,6 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         print('est state: ', estimator.estimated_state)
         #print("last position x,y: {}, {}".format(estimator.last_pose.x, estimator.last_pose.y))
-        #print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
+        print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
         estimator.main()
         rospy.sleep(2)

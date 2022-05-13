@@ -82,6 +82,6 @@ if __name__ == "__main__":
     lowpassfilter = LowPassFilter();
     while not rospy.is_shutdown():
         #print('filtered: ', lowpassfilter.filtered_pose)
-        #print("current position x,y: {}, {}".format(lowpassfilter.filtered_pose.x, lowpassfilter.filtered_pose.y))
+        print("current position x,y: {}, {}".format(lowpassfilter.filtered_pose.x, lowpassfilter.filtered_pose.y))
         lowpassfilter.main()
-        rospy.sleep(0.1)
+        rospy.sleep(1)

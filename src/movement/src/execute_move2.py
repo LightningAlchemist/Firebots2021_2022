@@ -24,7 +24,7 @@ class ExecuteMove:
 
         rospy.init_node('executing_movement', anonymous=False)
 
-        self.velocity_publisher = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+        self.velocity_publisher = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         #self.turn_ang = rospy.Publisher('turn_angle', Float64, queue_size=10)
 
         ##################################################################
@@ -35,7 +35,7 @@ class ExecuteMove:
         rospy.Subscriber('desired_position', Vector3, self.update_des_pos) #Update destination position from path_plan.py
         #rospy.Subscriber('delay', Point, self.update_delay_time)
 
-        self.rate = rospy.Rate(10)
+        #self.rate = rospy.Rate(10)
 
         ##################################################################
 
@@ -92,31 +92,32 @@ class ExecuteMove:
         self.delta_pos.x = self.pose.x - self.last_pos.x; #Change in x is current - last position
         self.delta_pos.y = self.pose.y - self.last_pos.y; #Change in  is current - last position
         
-        if self.check_pos(): #If the robot is not within the margin from the desired position
+        if (self.check_pos() == False): #If the robot is not within the margin from the desired position
             self.stop = False       #Don't stop
         
-        #self.vel_msg.linear.x = -0.03
-
         if self.stop is False:
             # start moving forward
-            print(self.des_pos.x)
             self.last_pos.x = self.pose.x #Update last position x
             self.last_pos.y = self.pose.y #Update last position y
-            
-            if (self.des_pos.x < self.pose.x): #Id the desitanation is less than position and the change in position is negative 
+            self.vel_msg.linear.x = .05 #Set linear velocity 
+            if (self.des_pos.x < self.pose.x) and (self.delta_pos.x < 0): #Id the desitanation is less than position and the change in position is negative 
                 self.vel_msg.linear.x = -0.1 #set x velocity to -0.
-            elif (self.des_pos.x > self.pose.x): #IF the destination is greater than pos and the change in pos is negateve
+            elif (self.des_pos.x < self.pose.x) and (self.delta_pos.x > 0): #If the destination is less than pos and the change in pos is positive
+                self.vel_msg.linear.x = -0.1    #Set linear x to -0.1
+            elif (self.des_pos.x > self.pose.x) and (self.delta_pos.x < 0): #IF the destination is greater than pos and the change in pos is negateve
                 self.vel_msg.linear.x = 0.1       #Set linear velocity to 0.1
+            elif (self.des_pos.x > self.pose.x) and (self.delta_pos.x > 0): #If the destination is greater than pos and the change in pos is positive
+                self.vel_msg.linear.x = 0.1 #Set linear velocity to 0.1
 
         self.velocity_publisher.publish(self.vel_msg) #Publish velocity
         #self.vel_msg.angular.z = 0
         # set back to going straingt right here or ramain still
-        #self.rate = rospy.Rate(1) #Set Rospy rate to 1
+        self.rate = rospy.Rate(1) #Set Rospy rate to 1
         #self.turn_ang.publish(self.turn_angle)
         #rospy.spin()
-        #self.rate = rospy.Rate(1) #Set Rospy Rate to 1
+        self.rate = rospy.Rate(1) #Set Rospy Rate to 1
 
-    #self.rate.sleep()
+    # self.rate.sleep()
 
     # possibly need to introduce turning error
 
@@ -152,13 +153,10 @@ class ExecuteMove:
     # checks if in the acceptable margin from the desired position
     def check_pos(self):
         if (self.des_pos.x > self.pose.x - self.margin) and (self.des_pos.x < self.pose.x):
-            print('exit condition 1')
             return False
         elif (self.des_pos.x > self.pose.x) and (self.des_pos.x < self.pose.x + self.margin):
-            print('exit condition 2')
             return False
         else:
-            print('exit condition 3')
             return True
 
 if __name__ == '__main__':

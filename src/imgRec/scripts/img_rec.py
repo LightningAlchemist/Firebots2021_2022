@@ -24,7 +24,7 @@ def avgRed(pixelArray): #Returns the average red in each frame
   
 def ledInFrame(redscore): #Sets the threshold for deciding if the LED is in the Frame
     led = "LED Not in Frame"
-    if redscore > 0.29:
+    if redscore > 0.0001:
         led = "LED in Frame"
     else:
         led = "LED NOT in Frame"
@@ -113,7 +113,8 @@ def testCode2(cam):
     i = 0;
     while(i < 1):
         ret, frame = cam.read();
-        cv.imshow('nanocam', frame[:,:,2])
+        #cv.imshow('nanocam', frame[:,:,2])
+        cv.imshow('nanocam', frame)
         #data2 = redScore(frame);
         data = redScore2(frame);
         #print("redScore = "+ str(data2));
@@ -144,4 +145,4 @@ if __name__ == "__main__": #Sets the camera and publishes the data to the topic.
     print("Camera Shutting Down")
     cam.release();
     cv.destroyAllWindows();
-   #testCode()
+    #testCode()

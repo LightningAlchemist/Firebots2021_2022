@@ -21,7 +21,7 @@ class PathPlan:
         rospy.Subscriber('estimated_state', Float32MultiArray, self.getState)  # subscribe tag message
         rospy.Subscriber('filtered_pos', Vector3, self.getPosition)  # subscribe estimator message
 
-        self.pub_desired_position = rospy.Publisher('c', Vector3, queue_size=1)
+        self.pub_desired_position = rospy.Publisher('desired_position', Vector3, queue_size=1)
         self.pub_entropy = rospy.Publisher('entropy', Float32MultiArray, queue_size=1)
 
         self.des_pos = Vector3()
@@ -82,16 +82,16 @@ class PathPlan:
         # when entropy values are similar)
 
         if self.rob_index > self.slice_size / 2:
-            if (entropy_left + 3) > entropy_right:
-            #if entropy_left > entropy_right:
+            #if (entropy_left + 3) > entropy_right:
+            if entropy_left > entropy_right:
                 #self.desired_index = max(0, self.rob_index - 1)
                 self.desired_index = 0
             else:
                 #self.desired_index = min(self.slice_size - 1, self.rob_index + 1)
                 self.desired_index = 149
         else:
-            if entropy_left > (entropy_right + 1.5):
-            #if entropy_left > entropy_right:
+            #if entropy_left > (entropy_right + 3):
+            if entropy_left > entropy_right:
                 #self.desired_index = max(0, self.rob_index - 1)
                 self.desired_index = 0
             else:
@@ -117,8 +117,8 @@ if __name__ == "__main__":
     path_plan = PathPlan();
     while not rospy.is_shutdown():
         #print('current position: ', path_plan.pose)
-        #print('desired position: ', path_plan.des_pos)
+        print('desired position: ', path_plan.des_pos)
         # print('subscribed state: ', path_plan.estate.data)
-        print('entropy: ', path_plan.entropy)
+        #print('entropy: ', path_plan.entropy)
         path_plan.main()
         rospy.sleep(2)  # 10Hz
