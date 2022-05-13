@@ -31,19 +31,26 @@ print("Writing robot joint state data to CSV")
 with open('estimator_state.csv', mode='w') as data_file:
   data_writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
   flag = False
-  #data_writer.writerow(['time', 'estimated_state'])
+  #data_writer.writerow(['time', 'index_location, 'estimated_state'])
+  index_pos = []
   for topic, msg, t in bag.read_messages():
     if not flag:
+      if topic == "/rob_index":
+        index_pos = [msg.data]
+        continue
       title = []
       flag = True
-      length = len(list(msg.data))
+      length = len(list(msg.data))+1
       for i in range(0,length):
         title.append("location %d" % (i))
-      data_writer.writerow(['time'] + title)
+      data_writer.writerow(['time', 'index_location'] + title)
+    if topic == "/rob_index":
+      index_pos = [msg.data]
+      continue
     #print(t, msg)
     # Only write to CSV if the message is for our robot
     #if msg.name[0] == "estimated_state":
-    data_writer.writerow([time.strftime("%H:%M:%S", time.localtime(t.secs))] + list(msg.data))
+    data_writer.writerow([time.strftime("%H:%M:%S", time.localtime(t.secs))] + index_pos + list(msg.data))
 
 print("Finished creating csv file!")
 bag.close()

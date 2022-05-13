@@ -124,4 +124,4 @@ if __name__ == "__main__":
         # print('subscribed state: ', path_plan.estate.data)
         #print('entropy: ', path_plan.entropy)
         path_plan.main()
-        rospy.sleep(2)  # 10Hz
+        rospy.sleep(1)  # 10Hz

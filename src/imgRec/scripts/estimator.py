@@ -56,8 +56,9 @@ class Estimator:
         #self.odom_pos.z = 1
         #self.last_odom_position = {'x': 0, 'y':0}
         #self.last_position = 0  # the previous position of the robot until distanceThreshold is exceeded
-        self.view_width = 12 # the number of indexes to the left and right of the position that are updated
+        self.view_width = 7 # the number of indexes to the left and right of the position that are updated
         self.redScore = 0
+        self.decayRate = 0.02
 
         self.pose = Tag() # dwm1001/tag1
         self.last_pose = Vector3() # difference between current and last position
@@ -85,9 +86,9 @@ class Estimator:
     def decayBelief(self):
         for idx, belief in enumerate(self.estimated_state):
             if belief > 0.5:
-                self.estimated_state[idx] = 0.998 * belief  # magic number: reduce current belief by 0.2% every spin to tend to 0.5
+                self.estimated_state[idx] = 0.998 * belief  # magic number: reduce current belief by 2% every spin to tend to 0.5
             else:
-                self.estimated_state[idx] = max(0.01, 1.002 * belief)  # magic number: increased belief by 0.2% every spin to tend to 0.5
+                self.estimated_state[idx] = max(0.01, 1.1 * belief)  # magic number: increased belief by 2% every spin to tend to 0.5
 
     def main(self):
         # check if robot has moved to the next grid

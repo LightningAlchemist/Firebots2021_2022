@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from turtle import Turtle
 import rospy
 import numpy
 import math
@@ -25,8 +26,8 @@ class ExecuteMove:
         #self.ang_vel = 2
         self.stop_x = True 
         self.stop_y = True 
-        self.margin_x = 0.05
-        self.margin_y = 0.03
+        self.margin_x = 0
+        self.margin_y = 0
         self.rate = rospy.Rate(1) #Cycles at a rate of 1 hz
         self.rate.sleep() 
         self.rate.sleep()
@@ -75,32 +76,40 @@ class ExecuteMove:
         #compare current and desire y position        
         if self.check_pos_y():
             self.stop_y = False
+        else:
+            self.vel_msg.angular.z = 0
+
+        target_x = self.des_pos.x - self.pose.x
+        target_y = self.des_pos.y - self.pose.y
+
         #make correction only during robot is moving
-#        if self.stop_y is False:
-#            print(self.des_pos.y)
-#            self.last_pos.y = self.pose.y
-#            target_x = self.des_pos.x - self.pose.x
-#            target_y = self.des_pos.y - self.pose.y
-#            dist2 = math.sqrt(math.pow(self.delta_pos.x, 2 ) + math.pow(self.delta_pos.y, 2)) 
-#            theta2 = acos(((self.delta_pos.x)/(dist2))) # angle between last and current position
-#            theta2 = (theta2 * math.pi)/180                        
-#            dist1 = math.sqrt(math.pow(target_x, 2 ) + math.pow(target_y, 2)) 
-#            theta1 = acos(((target_x)/(dist1))) # angle between last and current position
-#            theta1 = (theta1 * math.pi)/180
-#            theta = abs(theta1 - theta2)
-#            print(theta)
+        if self.stop_y is False:
+            print(self.des_pos.y)
+            self.last_pos.y = self.pose.y
+            dist2 = math.sqrt(math.pow(self.delta_pos.x, 2 ) + math.pow(self.delta_pos.y, 2)) 
+            theta2 = acos((self.delta_pos.x)/(dist2)) 
+            theta2 = (theta2 * math.pi)/180                        
+            dist1 = math.sqrt(math.pow(target_x, 2 ) + math.pow(target_y, 2)) 
+            theta1 = acos((target_x)/(dist1))
+            theta1 = (theta1 * math.pi)/180
+            theta = abs(theta1 - theta2)*0.1
+            print(theta)
             #base is going to left and des_pos.y is on the left -> counter clockwise
-#            if (self.des_pos.x < self.pose.x) and (self.des_pos.y < self.pose.y): 
-#                self.vel_msg.angular.z = -theta
+            if (self.des_pos.x < self.pose.x) and (self.des_pos.y < self.pose.y): 
+                self.vel_msg.angular.z = -theta
+#                self.vel_msg.angular.z = -0.005
             #base is going to left and des_pos.y is on the right -> clockwise
-#            elif (self.des_pos.x < self.pose.x) and (self.des_pos.y > self.pose.y):
-#                self.vel_msg.angular.z = theta
-#            #base is going to right and des_pos.y is on the left -> counter clockwise
-#            elif (self.des_pos.x > self.pose.x) and (self.des_pos.y > self.pose.y):
-#                self.vel_msg.angular.z = theta
+            elif (self.des_pos.x < self.pose.x) and (self.des_pos.y > self.pose.y):
+                self.vel_msg.angular.z = theta
+#                self.vel_msg.angular.z = 0.005
+            #base is going to right and des_pos.y is on the left -> counter clockwise
+            elif (self.des_pos.x > self.pose.x) and (self.des_pos.y > self.pose.y):
+#                self.vel_msg.angular.z = -0.005 
+               self.vel_msg.angular.z = -theta
             #base is going to right and des_pos.y is on the left -> clockwise
-#            elif (self.des_pos.x > self.pose.x) and (self.des_pos.y < self.pose.y):
-#                self.vel_msg.angular.z = -theta
+            elif (self.des_pos.x > self.pose.x) and (self.des_pos.y < self.pose.y):
+#                self.vel_msg.angular.z = 0.005 
+                self.vel_msg.angular.z = theta
 
         self.velocity_publisher.publish(self.vel_msg)
         #self.vel_msg.angular.z = 0
@@ -115,18 +124,9 @@ class ExecuteMove:
     # possibly need to introduce turning error
     
     # maybe want to round the numbers depending on testing results
-    def update_delay_time(self, data):#Round numbers on testing times
-        # print("\ndatax is: ")
-        # print(data.x)
-        # print("\ndatay is: ")
-        # print(data.y)
-        print("\nTime Sent from ws: ")
-        print(int(float(data.x)))
-        print(".", int(data.y))
-        print("\nTime received: ")
-        print(rospy.Time.now().secs, rospy.Time.now().nsecs)
 
     # maybe want to round the numbers depending on testing results
+    
     def update_pose(self, data):#Rounding testing results
         # print("\ndatax is: ")
         # print(data.x)
@@ -136,10 +136,10 @@ class ExecuteMove:
         self.pose.y = data.y
 
     def update_des_pos(self, data):#Update position
-        print("\ndes_posx is: ")
-        print(data.x)
-        print("\ndes_posy is: ")
-        print(data.y)
+        #print("\ndes_posx is: ")
+        #print(data.x)
+        #print("\ndes_posy is: ")
+        #print(data.y)
         self.des_pos.x = data.x
         self.des_pos.y = data.y
 
@@ -176,6 +176,6 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         try:
             cl.move()
-            rospy.sleep(0.5)
+            rospy.sleep(0.1)
         except rospy.ROSInterruptException:
             pass
