@@ -134,16 +134,12 @@ class Estimator:
 
         # get the redscore and check against the threshold. If above threshold, update belief that there is
         #  a fire at the current location in the belief matrix. Otherwise, update that there is no fire.
-        if self.redScore > self.redThreshold:
-            for index in viewArea:
-                self.estimated_state[index] = ((1 - self.FNR) * self.estimated_state[index]) / \
-                                                  ((1 - self.FNR) * self.estimated_state[index] + self.FPR * (
-                                                              1 - self.estimated_state[index]))
-        else:
-            for index in viewArea:
-                self.estimated_state[index] = (self.FNR * self.estimated_state[index]) / \
-                                                  ((1 - self.FPR) * (1 - self.estimated_state[index]) + self.FPR * (
-                                                  self.estimated_state[index]))
+        for index in viewArea:
+            e_state = self.estimated_state[index]
+            if self.redScore > self.redThreshold:
+                self.estimated_state[index] = ((1 - self.FNR) * e_state) / ((1 - self.FNR) * e_state + self.FPR * (1 - e_state))
+            else:
+                self.estimated_state[index] = (self.FNR * e_state) / ((1 - self.FPR) * (1 - e_state) + self.FPR * e_state)
 
         # the belief at each index in the belief matrix tends towards 0.5 (maximum uncertainty)
         self.decayBelief()
@@ -161,4 +157,4 @@ if __name__ == "__main__":
         #print("last position x,y: {}, {}".format(estimator.last_pose.x, estimator.last_pose.y))
         print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
         estimator.main()
-        rospy.sleep(2)
+        rospy.sleep(1)
