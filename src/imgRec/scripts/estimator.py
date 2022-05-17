@@ -9,38 +9,21 @@ import rosbag
 from cv2 import sqrt
 #mport tf2_py
 from geometry_msgs.msg import Vector3
-#from nav_msgs.msg import Odometry, OccupancyGrid
 from std_msgs.msg import Bool, Float32, String, Float32MultiArray
-#from nav_msgs.msg import Odometry
 from localizer_dwm1001.msg import Tag
 from math import floor, pow, acos
-#import tf2_geometry_msgs
-#mport tf2_msgs
-#import tf2_ros
-#from tf import transformations
 
 class Estimator:
     def getRedScore(self, data):
         self.redScore = data.data
 
-    #def getPosition(self, data):
-    #    self.odom_pos.x = data.pose.pose.position.x
-    #    self.odom_pos.y = data.pose.pose.position.y
-
     def getPosition(self, data):
-        #print("\ndatax is: ")
-        #print(data.x)
-        #print("\ndatay is: ")
-        #print(data.y)
-        self.pose.x = data.x
-        self.pose.y = data.y
+        self.index_position = data.data
 
     def __init__(self):
         rospy.init_node('estimator_listener', anonymous=False)
         rospy.Subscriber('img_rec_line', Float32, self.getRedScore)
-        #rospy.Subscriber('odom', Odometry, self.getPosition)
-        #rospy.Subscriber('/dwm1001/tag', Tag, self.getPosition) # subscribe tag message
-        rospy.Subscriber('filtered_pos', Tag, self.getPosition) # subscribe tag message
+        rospy.Subscriber('rob_index', int, self.getPosition) # subscribe tag message
 
         self.pub = rospy.Publisher('estimated_state', Float32MultiArray, queue_size=5)
 
@@ -52,37 +35,13 @@ class Estimator:
         self.estimated_state = [0.5] * self.num_locations  # list of 100 locations with initial probability of 0.5
 
         self.index_position = 0  # linear index position to left end of strip
-        #self.odom_pos = Vector3()
-        #self.odom_pos.z = 1
-        #self.last_odom_position = {'x': 0, 'y':0}
-        #self.last_position = 0  # the previous position of the robot until distanceThreshold is exceeded
         self.view_width = 5 # the number of indexes to the left and right of the position that are updated
         self.redScore = 0
         self.decayRate = 0.02
 
-        self.pose = Tag() # dwm1001/tag1
-        self.last_pose = Vector3() # difference between current and last position
-        self.delta_pose = Vector3() # difference between current and last position
-        self.last_pose.x = self.pose.x #last position = current position
-        self.last_pose.y = self.pose.y
-
-        while not self.pose.x and not self.pose.y:
+        # spinlock to block until the position is updated once through subscriber
+        while not self.index_position:
             continue
-
-        # self.left_bound = self.pose.x - (self.index_position * self.distanceThreshold)
-        # self.right_bound = self.pose.x + ((self.num_locations - self.index_position)*self.distanceThreshold)
-
-        x_offset = 0.52
-        #x_offset = 0.5
-        self.left_bound = x_offset
-        self.right_bound = x_offset + (self.num_locations * self.distanceThreshold)
-        
-        # self.bag = rosbag.Bag('estimator_info', 'w')
-
-       # def getPosition(location): #get position from DecaWave topic Distance from starting position
-        #    coordinates = location.data
-         #   position = ((coordinates[0]-startX)^2 + (coordinates[1] - startY)^2)**(0.5);
-          #  return position; 
 
     def decayBelief(self):
         for idx, belief in enumerate(self.estimated_state):
@@ -96,35 +55,19 @@ class Estimator:
         # get the position of the robot. if the difference between the new and old positions exceed
         #  the distance threshold, update the old position to the current position and update the
         #  linear index for the belief matrix
-        #dif = math.sqrt(math.pow(self.last_odom_position['x'] - self.odom_pos.x, 2 ) + math.pow(self.last_odom_position['y'] -self.odom_pos.y, 2))
 
-        self.delta_pose.x = self.pose.x - self.last_pose.x
-        self.delta_pose.y = self.pose.y - self.last_pose.y
-
-        dist = self.delta_pose.x
-
-        #if dif >= self.distanceThreshold:
-            #self.last_odom_position['x'] = self.odom_pos.x
-            #self.last_odom_position['y'] = self.odom_pos.y
-
-        # if dist >= self.distanceThreshold:
-        #     self.last_pose.x = self.pose.x
-        #     self.last_pose.x = self.pose.y
-        #     self.index_position += 1
-
-        if self.pose.x >= self.left_bound and self.pose.x <= self.right_bound:
-            self.index_position = int(floor((self.pose.x - self.left_bound)/self.distanceThreshold))
-            print('index_pos', self.index_position)
-
-        elif(self.pose.x<self.left_bound):
+        # force the index to be bounded between 0 and num_locations to prevent out-of-bounds errors.
+        #   preemptively raise an exception if something fuckity happens to help with back-tracing.
+        if(self.index_position < 0):
             self.index_position = 0;
-        elif(self.pose.x > self.right_bound):
+        elif(self.index_position > self.num_locations):
             self.index_position = self.num_locations-1
-            
-        # else:
-        #     raise IndexError('Robot out of bounds!')
+        # print('index_pos: ', self.index_position)
+        if self.index_position<0 or self.index_position > self.num_locations:
+            raise IndexError('Robot out of bounds!')
 
-        # set dynamic bounds to the left and right of the central position
+        # set dynamic bounds to the left and right of the central position based on the view_width parameter
+        #   ie., ensure that the "view width" doesn't cause an out-of-bounds error.
         leftBound = self.index_position - self.view_width
         if leftBound < 0:
             leftBound = 0
@@ -135,6 +78,7 @@ class Estimator:
 
         # get the redscore and check against the threshold. If above threshold, update belief that there is
         #  a fire at the current location in the belief matrix. Otherwise, update that there is no fire.
+        #  do this for all locations within the view area bounds itteratively.
         for index in viewArea:
             e_state = self.estimated_state[index]
             if self.redScore > self.redThreshold:
