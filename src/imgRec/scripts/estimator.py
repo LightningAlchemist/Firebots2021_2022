@@ -45,7 +45,7 @@ class Estimator:
         self.pub = rospy.Publisher('estimated_state', Float32MultiArray, queue_size=5)
 
         self.distanceThreshold = 4.9022/150  # The linear travel distance that constitutes a move to another grid
-        self.redThreshold = 0.0001  # the threshold to determine if the grid is on fire
+        self.redThreshold = 0.0005  # the threshold to determine if the grid is on fire
         self.FPR = 0.1  # false positive rate
         self.FNR = 0.1  # false negative rate
         self.num_locations = 150
@@ -56,7 +56,7 @@ class Estimator:
         #self.odom_pos.z = 1
         #self.last_odom_position = {'x': 0, 'y':0}
         #self.last_position = 0  # the previous position of the robot until distanceThreshold is exceeded
-        self.view_width = 7 # the number of indexes to the left and right of the position that are updated
+        self.view_width = 5 # the number of indexes to the left and right of the position that are updated
         self.redScore = 0
         self.decayRate = 0.02
 
@@ -72,7 +72,8 @@ class Estimator:
         # self.left_bound = self.pose.x - (self.index_position * self.distanceThreshold)
         # self.right_bound = self.pose.x + ((self.num_locations - self.index_position)*self.distanceThreshold)
 
-        x_offset = 0.71
+        x_offset = 0.52
+        #x_offset = 0.5
         self.left_bound = x_offset
         self.right_bound = x_offset + (self.num_locations * self.distanceThreshold)
         
@@ -161,4 +162,4 @@ if __name__ == "__main__":
         #print("last position x,y: {}, {}".format(estimator.last_pose.x, estimator.last_pose.y))
         print("current position x,y: {}, {}".format(estimator.pose.x, estimator.pose.y))
         estimator.main()
-        rospy.sleep(2)
+        rospy.sleep(1)

@@ -26,7 +26,7 @@ class PathPlan:
         self.pub_rob_index = rospy.Publisher('rob_index', Int16, queue_size=1)
 
         self.des_pos = Vector3()
-        self.offset = 0.71
+        self.offset = 0.52
         self.slice_size = 150
         self.led_length = 4.9022
         self.index_distance = self.led_length / self.slice_size
