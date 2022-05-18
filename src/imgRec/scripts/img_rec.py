@@ -82,6 +82,7 @@ def sendData(): ##Sends the red score and whether or not it is red to a topic
     
     while not rospy.is_shutdown():
         ret, frame = cam.read();
+        frame = frame[:, 240:400];
         frame = frame.astype(int);
         data = redScore3(frame);
         buffer.publish(data)
@@ -95,6 +96,7 @@ def testCode(cam): #some test code that gets the picture converts to a numpy arr
     i = 0;
     while(i < 1):
         ret, frame = cam.read();
+        frame = frame[:, 240:400];
         frame = frame.astype(int);
         #frame = cv.imread('test_red.jpg') 
         #cv.imshow('window', frame)
@@ -116,7 +118,9 @@ def testCode2(cam):
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         ret, frame = cam.read();
-        cv.imshow('nanocam', frame);
+        crop = frame[:, 240:400] ;
+        print(crop.shape);
+        cv.imshow('nanocam', crop);
         frame = frame.astype(int);
         data = redScore3(frame);
         buffer.publish(data)
@@ -129,8 +133,8 @@ def testCode2(cam):
 if __name__ == "__main__": #Sets the camera and publishes the data to the topic.
     #camSet = ('videotestsrc ! videoconvert ! appsink');
     fps = 1
-    frame_width = 640
-    frame_height = 360
+    #frame_width = 640
+    #frame_height = 360
     dispW=640
     dispH=360
     flip=0

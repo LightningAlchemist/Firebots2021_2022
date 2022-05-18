@@ -19,16 +19,19 @@ class PathPlan:
         rospy.init_node('GoToPos', anonymous=True)
         # rospy.Subscriber('odom', Odometry, self.getPosition)
         rospy.Subscriber('estimated_state', Float32MultiArray, self.getState)  # subscribe tag message
-        rospy.Subscriber('filtered_pos', Vector3, self.getPosition)  # subscribe estimator message
+        rospy.Subscriber('initial_position', Vector3, self.getInitialPosition)  # subscribe estimator message
+
+        rospy.Subscriber('rob_index', Int16, self.getIndex)
 
         self.pub_desired_position = rospy.Publisher('desired_position', Vector3, queue_size=1)
         self.pub_entropy = rospy.Publisher('entropy', Float32MultiArray, queue_size=1)
-        self.pub_rob_index = rospy.Publisher('rob_index', Int16, queue_size=1)
+        #self.pub_rob_index = rospy.Publisher('rob_index', Int16, queue_size=1)
 
         self.des_pos = Vector3()
-        self.offset = 0.52
+        self.ini_pos = Vector3()
+        self.offset = self.ini_pos.x
         self.slice_size = 150
-        self.led_length = 4.9022
+        self.led_length = 5
         self.index_distance = self.led_length / self.slice_size
         # self.entropy = [0] * self.slice_size
         self.entropy = np.zeros((self.slice_size))
@@ -38,26 +41,30 @@ class PathPlan:
         self.rob_index = 0
 
         # initialize desired postion = current position
-        self.des_pos.z = self.pose.z
-        self.des_pos.x = self.pose.x
-        while(not self.pose.y):
-            continue
-        self.des_pos.y = self.pose.y
+        #self.des_pos.z = self.pose.z
+        #self.des_pos.x = self.pose.x
+        #while(not self.pose.y):
+        #    continue
+        #self.des_pos.y = self.pose.y
 
     def getState(self, data):
         self.estate.data = data.data
 
-    def getPosition(self, data):
-        self.pose.x = data.x
-        self.pose.y = data.y
+    def getInitialPosition(self, data):
+        self.ini_pos.x = data.x
+        self.ini_pos.y = data.y
+
+    def getIndex(self, data):
+        self.rob_index = data.data
 
     def main(self):
         # Binary entropy calculation
         # entropy = -est_state.*log2(est_state)-(1-est_state).*log2(1-est_state); <= matlab code
         # entropy is max at 1 when estate is 0.5 => rate of decrement increases as estate decrease
 
-        self.rob_index = int(
-            min(math.floor((self.pose.x - self.offset) / self.index_distance), 149))  # prevent out of bound, rob_index is pose.x
+#        self.rob_index = int(
+#            min(math.floor((self.pose.x - self.offset) / self.index_distance), 149))  # prevent out of bound, rob_index is pose.x
+        
         for i in range(0, self.slice_size):
             if (len(self.estate.data) != 0):  # take some time to sync
                 est_state = self.estate.data[i]
@@ -73,11 +80,11 @@ class PathPlan:
         entropy_right = 0
         # entropy_left = sum(self.entropy(ind1:self.rob_index-1));
         # get the sum of entropy between the indices
-        entropy_left = np.sum(self.entropy[int(ind1):int(self.rob_index - 1)])
+        entropy_left = np.sum(self.entropy[int(ind1):(self.rob_index - 1)])
         print('left total',entropy_left, ind1, self.rob_index)
         # entropy_right = sum(entropy((rob_index+1):ind2));
         # get the sum of entropy between the indices
-        entropy_right = np.sum(self.entropy[int(self.rob_index + 1):int(ind2)])
+        entropy_right = np.sum(self.entropy[(self.rob_index + 1):int(ind2)])
         print('right total',entropy_right, self.rob_index, ind2)
 
         # Note: Added bias to move towards center of map (this takes effect
@@ -88,17 +95,21 @@ class PathPlan:
             if entropy_left > entropy_right:
                 #self.desired_index = max(0, self.rob_index - 1)
                 self.desired_index = 0
+                self.des_pos.y = self.ini_pos.y
             else:
                 #self.desired_index = min(self.slice_size - 1, self.rob_index + 1)
                 self.desired_index = 149
+                self.des_pos.y = self.ini_pos.y + 10
         else:
             #if entropy_left > (entropy_right + 3):
             if entropy_left > entropy_right:
                 #self.desired_index = max(0, self.rob_index - 1)
                 self.desired_index = 0
+                self.des_pos.y = self.ini_pos.y
             else:
                 #self.desired_index = min(self.slice_size - 1, self.rob_index + 1)
                 self.desired_index = 149
+                self.des_pos.y = self.ini_pos.y + 10
 
         #print('entropy: ', self.rob_index)
 
@@ -113,7 +124,7 @@ class PathPlan:
         #pub_entropy = self.entropy
 
         self.pub_desired_position.publish(self.des_pos) 
-        self.pub_rob_index.publish(self.rob_index)   
+        #self.pub_rob_index.publish(self.rob_index)   
         #self.pub_entropy.publish(pub_entropy) 
 
 if __name__ == "__main__":
@@ -124,4 +135,4 @@ if __name__ == "__main__":
         # print('subscribed state: ', path_plan.estate.data)
         #print('entropy: ', path_plan.entropy)
         path_plan.main()
-        rospy.sleep(1)  # 10Hz
+        rospy.sleep(0.1)  # 10Hz

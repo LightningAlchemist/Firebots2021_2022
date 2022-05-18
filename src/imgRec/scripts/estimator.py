@@ -56,7 +56,7 @@ class Estimator:
         #self.odom_pos.z = 1
         #self.last_odom_position = {'x': 0, 'y':0}
         #self.last_position = 0  # the previous position of the robot until distanceThreshold is exceeded
-        self.view_width = 5 # the number of indexes to the left and right of the position that are updated
+        self.view_width = 3 # the number of indexes to the left and right of the position that are updated
         self.redScore = 0
         self.decayRate = 0.02
 
