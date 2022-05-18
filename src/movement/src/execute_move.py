@@ -75,9 +75,9 @@ class ExecuteMove:
             #print(self.des_pos.x)
             self.last_pos.x = self.cur_pose.x
             if (self.des_pos.x < self.cur_pose.x): 
-                vel_x = -0.03
+                vel_x = -0.06
             elif (self.des_pos.x > self.cur_pose.x):
-                vel_x = 0.03
+                vel_x = 0.06
         self.vel_msg.linear.x = vel_x
         #compare current and desire y position        
         if self.check_pos_y():
