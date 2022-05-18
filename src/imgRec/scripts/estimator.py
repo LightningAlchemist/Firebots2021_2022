@@ -37,18 +37,26 @@ class Estimator:
         self.index_position = 0  # linear index position to left end of strip
         self.view_width = 5 # the number of indexes to the left and right of the position that are updated
         self.redScore = 0
-        self.decayRate = 0.02
+        self.decayRate = 0.99
 
         # spinlock to block until the position is updated once through subscriber
         while not self.index_position:
             continue
 
+
     def decayBelief(self):
+        # Decays the belief P(Fire_i(time=t)) based on current belief, the average belief of the the neighboring locations, and a decay rate.
+        #  Equation is: P(F_i(t+1)) = decayRate*P(F_i(t)) + (1-decayRate)*(.5*P(F_i-1(t)) + .5*P(F_i+1(t)))
+
+        previous_belief = self.estimated_state.copy()   # deep copy of current belief at time = t
         for idx, belief in enumerate(self.estimated_state):
-            if belief > 0.5:
-                self.estimated_state[idx] = 0.998 * belief  # magic number: reduce current belief by 2% every spin to tend to 0.5
+            if(idx == 0):   # edge case: at left boundary
+                self.estimated_state[idx] = self.decayRate*previous_belief[idx] + (1-self.decayRate)*( previous_belief[idx+1])
+            elif(idx == self.num_locations-1):  # edge case: at right boundary
+                self.estimated_state[idx] = self.decayRate*previous_belief[idx] + (1-self.decayRate)*( previous_belief[idx-1])
             else:
-                self.estimated_state[idx] = max(0.01, 1.1 * belief)  # magic number: increased belief by 2% every spin to tend to 0.5
+                self.estimated_state[idx] = self.decayRate*previous_belief[idx] + (1-self.decayRate)*(.5*(previous_belief[idx-1] + previous_belief[idx+1]))
+
 
     def main(self):
         # check if robot has moved to the next grid
