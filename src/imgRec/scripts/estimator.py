@@ -37,7 +37,7 @@ class Estimator:
         self.index_position = 0  # linear index position to left end of strip
         self.view_width = 5 # the number of indexes to the left and right of the position that are updated
         self.redScore = 0
-        self.decayRate = 0.99
+        self.decayRate = 0.99   # this should be tuned to the fire spread AND the update rate to privide accurate decay
 
         # spinlock to block until the position is updated once through subscriber
         while not self.index_position:
