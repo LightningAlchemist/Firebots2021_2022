@@ -35,15 +35,7 @@ class Estimator:
         self.estimated_state = [0.5] * self.num_locations  # list of 100 locations with initial probability of 0.5
 
         self.index_position = 0  # linear index position to left end of strip
-<<<<<<< HEAD
-        #self.odom_pos = Vector3()
-        #self.odom_pos.z = 1
-        #self.last_odom_position = {'x': 0, 'y':0}
-        #self.last_position = 0  # the previous position of the robot until distanceThreshold is exceeded
         self.view_width = 3 # the number of indexes to the left and right of the position that are updated
-=======
-        self.view_width = 5 # the number of indexes to the left and right of the position that are updated
->>>>>>> 9aa1f5718604b668bcd6097df251be4e7d562129
         self.redScore = 0
         self.decayRate = 0.99   # this should be tuned to the fire spread AND the update rate to privide accurate decay
 
