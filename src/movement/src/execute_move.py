@@ -74,9 +74,9 @@ class ExecuteMove:
         if self.stop_x is False:
             #print(self.des_pos.x)
             self.last_pos.x = self.cur_pose.x
-            if (self.des_pos.x < self.cur_pose.x): 
+            if (self.des_pos.x < self.cur_pose.x) or (self.cur_pose.x > self.initial_pos.x + 5): 
                 vel_x = -0.06
-            elif (self.des_pos.x > self.cur_pose.x):
+            elif (self.des_pos.x > self.cur_pose.x) or (self.initial_pos.x >= self.cur_pose.x):
                 vel_x = 0.06
         self.vel_msg.linear.x = vel_x
         #compare current and desire y position        
@@ -97,7 +97,7 @@ class ExecuteMove:
             #theta = acos(abs(target_y)/abs(target_x))
             #k proportional constant
             #theta = theta * k
-            theta = 0.000012
+            theta = 0.000024
             print('des_x: ', self.des_pos.x, 'cur_x: ', self.cur_pose.x)
             print('des_y: ', self.des_pos.y, 'cur_y: ', self.cur_pose.y)
             print('angle: ', theta)

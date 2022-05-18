@@ -62,25 +62,24 @@ class LowPassFilter:
         self.led_length = 5.00
         self.index_distance = self.led_length / self.slice_size
         self.rob_index = 0
-        self.count = 0
 
-        self.initial_pose.x = self.filtered_pose.x
-        self.initial_pose.y = self.filtered_pose.y
-        self.initial_pose.z = self.filtered_pose.z
+        while (not self.pose.x and not self.pose.y):
+            print("Initializing...")
 
-        self.pub_initial_position.publish(self.initial_pose)
+        for i in range(25):
+            self.initial_pose.x = .5*self.initial_pose.x + .5*self.pose.x
+            self.initial_pose.y = .5*self.initial_pose.y + .5*self.pose.y
+
+        
 
     def main(self):
         # Shift sensor measurement array and add new value 
         # void *memcpy(void *dest, const void * src, size_t n)
         # copy prevDistVals[1] to prevDistVals[0]
         # memcpy(prevDistVals, &prevDistVals[1], sizeof(prevDistVals) - sizeof(float));
-        self.count = self.count + 1
 
-        if self.count == 20:
-            self.initial_pose.x = self.filtered_pose.x
-            self.initial_pose.y = self.filtered_pose.y
-            self.initial_pose.z = self.filtered_pose.z
+        # if self.count == 100:
+
 
         self.prev_pose_x = self.prev_pose_x[1:] # remove the first element or del a[0], pop is not inefficient as it returns the item
         self.prev_pose_x.append(self.pose.x)
@@ -101,9 +100,12 @@ class LowPassFilter:
         self.filtered_pose.y = filtered_pose_y
         
         self.rob_index = int(min(math.floor((self.filtered_pose.x - self.initial_pose.x) / self.index_distance), 149))
+        if self.rob_index < 0:
+            self.rob_index = 0
 
         self.pub_filtered_position.publish(self.filtered_pose)
         self.pub_rob_index.publish(self.rob_index)
+        self.pub_initial_position.publish(self.initial_pose)
 
 if __name__ == "__main__":
     lowpassfilter = LowPassFilter()
