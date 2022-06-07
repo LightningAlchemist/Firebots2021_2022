@@ -1,0 +1,40 @@
+import java.io.*;
+import java.lang.StringBuilder;
+public class ValidationCleanup {
+
+	public static void main(String[] args) throws IOException {
+		// TODO Auto-generated method stub
+		File file = new File("C:\\Users\\josep\\OneDrive\\Documents\\UniversityofWashington\\SeniorProject\\BrianValidation\\LEDValidation\\LedVal18.csv");
+		FileReader fileReader = new FileReader(file); 
+		StringBuilder sb = new StringBuilder();
+		char c = 0;
+		int signedInt = 0;
+		while(signedInt != -1) {
+				signedInt = fileReader.read();
+				 c = (char)signedInt;//Reads the file character by character
+				 sb.append(c);
+		}
+		for(int i = 0; i < sb.length(); i ++) {
+			if(sb.charAt(i) == '\''){
+				sb.replace(i, i, "");
+			}
+		}
+	     System.out.println(sb.toString());
+		   // creates the file
+		//file.createNewFile();
+		     
+		      // creates a FileWriter Object
+		//FileWriter writer = new FileWriter(file); 
+		     
+		      // Writes the content to the file
+		//writer.write("This\n is\n an\n example\n"); 
+		//writer.flush();
+		//writer.close();
+
+		      // Creates a FileReader Object
+		
+
+	
+
+	}
+}
