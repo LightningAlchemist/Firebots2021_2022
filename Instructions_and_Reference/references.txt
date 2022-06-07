@@ -1,0 +1,45 @@
+Firebots Project
+https://github.com/FireBot-Project/CAMP/blob/master/execute_command_line.txt
+
+
+Turtlebot3 e-Manual
+https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/
+
+Turtlebot3 Specification
+https://emanual.robotis.com/docs/en/platform/turtlebot3/features/#specifications
+
+Nvidia Jetson Nano: Image download
+https://developer.nvidia.com/embedded/jetson-nano-developer-kit
+
+Decawave Localization Unit: Spec Sheet
+https://www.decawave.com/sites/default/files/dwm1001_datasheet.pdf
+
+ROS Melodic
+http://wiki.ros.org/melodic/Installation/Ubuntu
+
+ROS Installation 
+https://github.com/FireBot-Project/CAMP/blob/master/ROS_Installation.txt
+
+Decawave DWM1001 Installation
+https://github.com/FireBot-Project/CAMP/blob/master/DWM1001_Installation.txt
+
+Remote PC Installation
+https://github.com/FireBot-Project/CAMP/blob/master/Remote_PC_Installation.txt
+
+NVIDIA Jetson Nano Installation
+https://github.com/FireBot-Project/CAMP/blob/master/Jetson_Nano_Installation.txt
+
+OpenCV Installation on Jetson Nano
+https://github.com/FireBot-Project/CAMP/blob/master/Install_OpenCV42_on_Jetson_Nano.txt
+
+PI Camera Installation on Jetson Nano
+https://www.okdo.com/getting-started/get-started-with-jetson-nano-4gb-and-csi-camera/
+
+RealSense Installation
+https://github.com/FireBot-Project/CAMP/blob/master/Remote_PC_Realsense_Installation.txt
+
+RP Lidar Installation
+https://github.com/FireBot-Project/CAMP/blob/master/RPLIDAR_install.txt
+
+Execute Commands
+https://github.com/FireBot-Project/CAMP/blob/master/execute_command_line.txt
